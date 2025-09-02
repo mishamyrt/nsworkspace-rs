@@ -1,0 +1,56 @@
+[package]
+name = "nsworkspace"
+version = "0.1.0"
+authors = ["Mikhael Khrustik <misha@myrt.co>"]
+edition = "2021"
+rust-version = "1.80"
+homepage = "https://github.com/mishamyrt/nsworkspace-rs"
+documentation = "https://github.com/mishamyrt/nsworkspace-rs"
+repository = "https://github.com/mishamyrt/nsworkspace-rs"
+license = "MIT"
+
+[dependencies]
+thiserror = "2.0.16"
+objc2 = "0.6.2"
+objc2-app-kit = "0.3.1"
+objc2-foundation = "0.3.1"
+bitmask-enum = "2.2.5"
+
+[lints.rust]
+unreachable_pub = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = [
+    "cfg(codspeed)",
+] }
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -2 }
+# Allowed pedantic lints
+char_lit_as_u8 = "allow"
+collapsible_else_if = "allow"
+collapsible_if = "allow"
+implicit_hasher = "allow"
+map_unwrap_or = "allow"
+match_same_arms = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+similar_names = "allow"
+single_match_else = "allow"
+too_many_lines = "allow"
+needless_raw_string_hashes = "allow"
+# Disallowed restriction lints
+print_stdout = "warn"
+print_stderr = "warn"
+dbg_macro = "warn"
+empty_drop = "warn"
+empty_structs_with_brackets = "warn"
+exit = "warn"
+get_unwrap = "warn"
+rc_buffer = "warn"
+rc_mutex = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+redundant_clone = "warn"
+debug_assert_with_mut_call = "warn"
+unused_peekable = "warn"
+large_stack_arrays = "allow"
