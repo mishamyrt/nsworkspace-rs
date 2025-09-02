@@ -16,7 +16,10 @@ use objc2_app_kit::{
     NSWorkspaceScreensDidSleepNotification, NSWorkspaceScreensDidWakeNotification,
     NSWorkspaceWillPowerOffNotification, NSWorkspaceWillSleepNotification,
 };
-use objc2_foundation::{NSNotification, NSObject, NSObjectProtocol, NSString};
+use objc2_foundation::{
+    NSNotification, NSObject, NSObjectNSThreadPerformAdditions, NSObjectProtocol,
+    NSString,
+};
 
 use crate::events::{Event, NotificationListener};
 use crate::parse::{app_identifier_from_notification, running_application_identifier};
@@ -220,6 +223,18 @@ impl Monitor {
         let object = ProtocolObject::from_ref(&*self.delegate);
         app.setDelegate(Some(object));
         app.run();
+    }
+
+    /// Stops the `NSWorkspace` run loop.
+    pub fn stop(&self) {
+        let app = NSApplication::sharedApplication(self.mtm);
+        unsafe {
+            app.performSelectorOnMainThread_withObject_waitUntilDone(
+                sel!(terminate:),
+                None,
+                false,
+            );
+        }
     }
 
     /// Returns the bundle identifier of the currently active application.
