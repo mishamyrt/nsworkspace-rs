@@ -1,5 +1,6 @@
 [package]
 name = "nsworkspace"
+description = "A library for listening to NSWorkspace notifications."
 version = "0.1.0"
 authors = ["Mikhael Khrustik <misha@myrt.co>"]
 edition = "2021"
