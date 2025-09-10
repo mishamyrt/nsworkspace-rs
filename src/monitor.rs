@@ -1,4 +1,5 @@
 use std::sync::mpsc;
+use std::thread;
 
 use objc2::rc::{Retained};
 use objc2::runtime::{ProtocolObject, Sel};
@@ -22,6 +23,7 @@ use objc2_foundation::{
 };
 
 use crate::events::{Event, NotificationListener};
+use crate::monitor;
 use crate::parse::{app_identifier_from_notification, running_application_identifier};
 
 #[derive(Debug)]
@@ -110,7 +112,7 @@ impl AppDelegate {
         unsafe { msg_send![super(this), init] }
     }
 
-    unsafe fn get_active_application() -> Option<String> {
+    fn get_active_application() -> Option<String> {
         unsafe {
             let workspace = NSWorkspace::sharedWorkspace();
             let active_application = workspace.frontmostApplication().unwrap();
@@ -203,43 +205,57 @@ impl AppDelegate {
 /// `NSWorkspace` Monitor owns the `AppDelegate` instance and is responsible for starting and stopping the listening.
 pub struct Monitor {
     delegate: Retained<AppDelegate>,
-    mtm: MainThreadMarker,
+    app: Retained<NSApplication>,
 }
 
 impl Monitor {
     /// Creates a new `Monitor` instance.
-    pub fn new() -> Option<(Self, mpsc::Receiver<Event>)> {
-        let (events, events_rx) = mpsc::channel();
-
+    pub fn new() -> Option<(Self, mpsc::Receiver<Event>, mpsc::Sender<()>)> {
         let mtm = MainThreadMarker::new()?;
-        let delegate = AppDelegate::new(mtm, events);
+        let (events_tx, events_rx) = mpsc::channel();
+        let (stop_tx, stop_rx) = mpsc::channel();
 
-        Some((Self { delegate, mtm }, events_rx))
+        let delegate = AppDelegate::new(mtm, events_tx);
+        let app = NSApplication::sharedApplication(mtm);
+
+        thread::spawn(move || {
+            for () in stop_rx {
+                Self::terminate();
+            }
+        });
+
+        let monitor = Self {
+            delegate,
+            app,
+        };
+
+        Some((monitor, events_rx, stop_tx))
     }
 
     /// Starts the `NSWorkspace` run loop.
     pub fn run(&self) {
-        let app = NSApplication::sharedApplication(self.mtm);
         let object = ProtocolObject::from_ref(&*self.delegate);
-        app.setDelegate(Some(object));
-        app.run();
+        self.app.setDelegate(Some(object));
+        self.app.run();
     }
 
-    /// Stops the `NSWorkspace` run loop.
-    pub fn stop(&self) {
-        let app = NSApplication::sharedApplication(self.mtm);
-        unsafe {
-            app.performSelectorOnMainThread_withObject_waitUntilDone(
-                sel!(terminate:),
-                None,
-                false,
-            );
-        }
+    /// Stops the `NSWorkspace` run loop by sending the `terminate` message to the `NSApplication` instance.
+    /// This method is thread-safe and can be called from any thread.
+    fn terminate() {
+        thread::spawn(move || {
+            dispatch::Queue::main().exec_async(|| {
+                let Some(mtm) = MainThreadMarker::new() else {
+                    unreachable!()
+                };
+                let app = NSApplication::sharedApplication(mtm);
+                unsafe { app.terminate(None) };
+            });
+        });
     }
 
     /// Returns the bundle identifier of the currently active application.
     pub fn get_active_application(&self) -> Option<String> {
-        unsafe { AppDelegate::get_active_application() }
+        AppDelegate::get_active_application()
     }
 
     /// Subscribes to the given notification listeners.

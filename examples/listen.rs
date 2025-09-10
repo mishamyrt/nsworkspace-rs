@@ -4,7 +4,7 @@ use nsworkspace::{NotificationListener, Monitor};
 
 #[allow(clippy::print_stderr, clippy::print_stdout)]
 fn main() {
-    let Some((monitor, events)) = Monitor::new() else {
+    let Some((monitor, events, _)) = Monitor::new() else {
         eprintln!("Failed to create NSWorkspace monitor");
         return;
     };
