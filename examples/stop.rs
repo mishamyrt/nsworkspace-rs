@@ -1,4 +1,4 @@
-use std::{sync::mpsc, thread};
+use std::thread;
 
 use nsworkspace::{Monitor, NotificationListener};
 

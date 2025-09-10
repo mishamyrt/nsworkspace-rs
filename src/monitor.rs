@@ -17,13 +17,9 @@ use objc2_app_kit::{
     NSWorkspaceScreensDidSleepNotification, NSWorkspaceScreensDidWakeNotification,
     NSWorkspaceWillPowerOffNotification, NSWorkspaceWillSleepNotification,
 };
-use objc2_foundation::{
-    NSNotification, NSObject, NSObjectNSThreadPerformAdditions, NSObjectProtocol,
-    NSString,
-};
+use objc2_foundation::{NSNotification, NSObject, NSObjectProtocol, NSString};
 
 use crate::events::{Event, NotificationListener};
-use crate::monitor;
 use crate::parse::{app_identifier_from_notification, running_application_identifier};
 
 #[derive(Debug)]
@@ -224,10 +220,7 @@ impl Monitor {
             }
         });
 
-        let monitor = Self {
-            delegate,
-            app,
-        };
+        let monitor = Self { delegate, app };
 
         Some((monitor, events_rx, stop_tx))
     }
